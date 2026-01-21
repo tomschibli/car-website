@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pure Driving Collection</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <!-- Custom Styles & Animations -->
+    <style>
+        /* Smooth Scrolling */
+        html { scroll-behavior: smooth; }
+        
+        /* Animation Keyframes */
+        @keyframes slow-pan {
+            0% { transform: scale(1.05); }
+            100% { transform: scale(1.1); }
+        }
+        .animate-slow-pan {
+            animation: slow-pan 20s infinite alternate ease-in-out;
+        }
+
+        /* Utility Classes for Scroll Reveal */
+        .reveal-hidden {
+            opacity: 0;
+            transform: translateY(2rem) scale(0.95);
+            filter: blur(4px);
+            transition: all 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .reveal-visible {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+            filter: blur(0);
+        }
+
+        /* Hide scrollbar for clean UI */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;  /* IE and Edge */
+            scrollbar-width: none;  /* Firefox */
+        }
+    </style>
+</head>
+<body class="bg-white text-black font-sans selection:bg-black selection:text-white overflow-x-hidden">
+
+    <!-- App Container -->
+    <div id="app"></div>
+
+    <!-- JAVASCRIPT LOGIC -->
+    <script>
+        // --- DATEN ---
+        const brandData = {
+            "Mercedes-Benz": { hq: "Stuttgart, Deutschland", founded: "1926", heroImage: "https://group.mercedes-benz.com/bilder/karriere/ueber-uns/standorte/ndl-locations/ndl-stuttgart-w1920xh1080-cutout.jpg", desc: "Das Beste oder nichts." },
+            "Ford": { hq: "Dearborn, Michigan, USA", founded: "1903", heroImage: "https://wdet.org/wp-content/uploads/2025/09/2012-Ford-World-Headquarters-MS99983-scaled.jpg", desc: "Built Ford Tough." },
+            "Jaguar": { hq: "Coventry, UK", founded: "1922", heroImage: "https://media.production.jlrms.com/alf/images/2019-06/e5e5a48f-a324-4a8d-b7be-f917a2268b2a/jaguarlandrovernorthamericaheadquartersimage.jpg?VersionId=CX8RAJ83BPmIVlcsUEHD0cNjtss5P0ug", desc: "The Art of Performance." },
+            "Ferrari": { hq: "Maranello, Italien", founded: "1939", heroImage: "https://www.autoblog.com/.image/c_fill,w_1200,h_900,g_faces:center/MjEwNjU5NjI4OTQ4NjYyMjQ5/ferraris-solar-powered-maranello-factory.jpg", desc: "Essere Ferrari." },
+            "McLaren": { hq: "Woking, UK", founded: "1963", heroImage: "https://uncrate.com/p/2020/10/mclaren-headquarters-1.jpg", desc: "Fearlessly Forward." },
+            "Toyota": { hq: "Toyota City, Japan", founded: "1937", heroImage: "https://upload.wikimedia.org/wikipedia/commons/7/76/Toyota_Group_Pavilion.jpg", desc: "Let's Go Places." },
+            "Porsche": { hq: "Stuttgart, Deutschland", founded: "1931", heroImage: "https://www.arch2o.com/wp-content/uploads/2016/02/Arch2O-porsche-u-s-experience-center-and-headquarters-hok-12.jpg", desc: "There is no substitute." },
+            "Bugatti": { hq: "Molsheim, Frankreich", founded: "1909", heroImage: "https://robbreport.com/wp-content/uploads/2022/09/Bugatti_Bubble1.jpg?w=1000", desc: "Breaking New Dimensions." },
+            "Rimac": { hq: "Sveta Nedelja, Kroatien", founded: "2009", heroImage: "https://cdn.prod.www.manager-magazin.de/images/44831893-c577-4708-8587-350904216ff6_w1200_r1.33_fpx40_fpy29.jpg", desc: "Electro Mobility Redefined." },
+            "Lamborghini": { hq: "Sant'Agata Bolognese, Italien", founded: "1963", heroImage: "https://www.lamborghini.com/sites/it-en/files/DAM/lamborghini/0_facelift_2025/model_details/concept/estoque/cross/company.png", desc: "Expect the Unexpected." },
+            "Koenigsegg": { hq: "Ängelholm, Schweden", founded: "1994", heroImage: "https://image.kurier.at/images/cfs_landscape_616w_347h/6706616/803a1b19002dd5c5_800x800ar.jpg", desc: "The Spirit of Performance." },
+            "Pagani": { hq: "San Cesario sul Panaro, Italien", founded: "1992", heroImage: "https://d3rr2gvhjw0wwy.cloudfront.net/uploads/activity_galleries/255435/1200x800-1-50-eb5b21174b62cf413e2da8bf5f2c13be.jpg", desc: "Art and Science." },
+            "Tesla": { hq: "Austin, Texas, USA", founded: "2003", heroImage: "https://teslawissen.ch/wp-content/uploads/2020/01/WerkTilburg.webp", desc: "Accelerating the World's Transition." },
+            "Nissan": { hq: "Yokohama, Japan", founded: "1933", heroImage: "https://wieck-nissanao-production.s3.amazonaws.com/photos/a143923111f2d201543918778bc770946aeeca93/preview-928x522.jpg", desc: "Innovation that Excites." },
+            "Aston Martin": { hq: "Gaydon, UK", founded: "1913", heroImage: "https://assets.astonmartinf1.com/public/cms/4UWAoOumNn75nlFEW8wgoD/425f605ea1551e95da69413bcdc67096/AM_Campus_V1_1.jpg?w=1500&fit=fill", desc: "Power, Beauty, Soul." },
+            "BMW": { hq: "München, Deutschland", founded: "1916", heroImage: "https://www.bmwgroup.com/de/general/anfahrt-zentrale/_jcr_content/main/layoutcontainer/stagecompactteaser.coreimg.jpeg/1586947101218/2560x896-bmw-welt-hochhaus-werk.jpeg", desc: "Freude am Fahren." },
+            "Audi": { hq: "Ingolstadt, Deutschland", founded: "1909", heroImage: "https://cdn02.audi.com.au/cms/media/33556/a181443_medium.jpg", desc: "Vorsprung durch Technik." }
+        };
+
+        const carData = [
+            { id: "benz-1", model: "Benz Patent-Motorwagen", year: 1886, content: { de: { desc: "Der Urvater aller Automobile. Ein dreirädriges Fahrzeug mit Verbrennungsmotor.", country: "Deutschland", price: "Unbezahlbar", production: "ca. 25 Stück", engine: "1-Zyl. Viertakt" }, en: { desc: "The forefather of all automobiles. A three-wheeled vehicle with an internal combustion engine.", country: "Germany", price: "Priceless", production: "approx. 25 units", engine: "1-cyl Four-stroke" } }, specs: { hp: "0.75 PS", speed: "16 km/h", brand: "Mercedes-Benz", weight: "265 kg", accel: "N/A" }, imageUrl: "https://upload.wikimedia.org/wikipedia/commons/7/71/1885Benz.jpg" },
+            { id: "300sl", model: "Mercedes-Benz 300 SL", year: 1954, content: { de: { desc: "Der Flügeltürer. Ein Design-Meisterwerk und der erste Supersportwagen der Nachkriegszeit.", country: "Deutschland", price: "> 1 Mio €", production: "1.400 Stück", engine: "3.0L R6" }, en: { desc: "The Gullwing. A design masterpiece and the first post-war supercar.", country: "Germany", price: "> 1 Mio €", production: "1,400 units", engine: "3.0L Inline-6" } }, specs: { hp: "215 PS", speed: "260 km/h", brand: "Mercedes-Benz", weight: "1.310 kg", accel: "10.0 s" }, imageUrl: "https://cdn.motor1.com/images/mgl/koWjqn/s1/mercedes-benz-300-sl-coupe-w-198.jpg" },
+            { id: "ford-t", model: "Ford Model T", year: 1908, content: { de: { desc: "Die Tin Lizzie. Das erste Auto, das am Fließband gefertigt wurde.", country: "USA", price: "Historisch", production: "15 Mio. Stück", engine: "2.9L 4-Zylinder" }, en: { desc: "The Tin Lizzie. The first car to be mass-produced on an assembly line.", country: "USA", price: "Historical", production: "15 million units", engine: "2.9L 4-Cylinder" } }, specs: { hp: "20 PS", speed: "70 km/h", brand: "Ford", weight: "540 kg", accel: "N/A" }, imageUrl: "https://www.nostalgicmotoringltd.com/wp-content/uploads/2024/11/10_20_24_Ford_Model_T-5-scaled.jpg" },
+            { id: "mustang-dark", model: "Ford Mustang Dark Horse", year: 2024, content: { de: { desc: "Die moderne Interpretation des klassischen Muscle Cars. V8-Power.", country: "USA", price: "ca. 70.000 €", production: "Serie", engine: "5.0L Coyote V8" }, en: { desc: "The modern interpretation of the classic Muscle Car. V8 Power.", country: "USA", price: "approx. 70,000 €", production: "Series", engine: "5.0L Coyote V8" } }, specs: { hp: "500 PS", speed: "270 km/h", brand: "Ford", weight: "1.750 kg", accel: "3.7 s" }, imageUrl: "https://www.topgear.com/sites/default/files/2023/07/24_DarkHourse_BlueEmber_Mediadrive%20NC_04.jpg" },
+            { id: "etype", model: "Jaguar E-Type", year: 1961, content: { de: { desc: "Laut Enzo Ferrari das 'schönste Auto der Welt'. Britische Eleganz.", country: "UK", price: "Hoher Wert", production: "72.500 Stück", engine: "3.8L R6" }, en: { desc: "According to Enzo Ferrari, the 'most beautiful car in the world'. British elegance.", country: "UK", price: "High Value", production: "72,500 units", engine: "3.8L Inline-6" } }, specs: { hp: "265 PS", speed: "241 km/h", brand: "Jaguar", weight: "1.315 kg", accel: "7.0 s" }, imageUrl: "https://upload.wikimedia.org/wikipedia/commons/c/cd/Jaguar_E-Type_%282012-06-10_049_Sp_re%29.JPG" },
+            { id: "xj220", model: "Jaguar XJ220", year: 1992, content: { de: { desc: "Einst das schnellste Serienauto der Welt. Ein Twin-Turbo V6 Monster, das seiner Zeit voraus war.", country: "UK", price: "ca. 500.000 €", production: "275 Stück", engine: "3.5L V6 Biturbo" }, en: { desc: "Once the fastest production car in the world. A twin-turbo V6 monster ahead of its time.", country: "UK", price: "approx. 500,000 €", production: "275 units", engine: "3.5L V6 Twin-Turbo" } }, specs: { hp: "542 PS", speed: "341 km/h", brand: "Jaguar", weight: "1.470 kg", accel: "3.6 s" }, imageUrl: "https://cdn.rmsothebys.com/a/2/d/1/0/3/a2d1039e5f553f58b25ca8fc22e408ceb9a80967.webp" },
+            { id: "f40", model: "Ferrari F40", year: 1987, content: { de: { desc: "Das letzte Auto unter Enzo Ferraris Aufsicht. Ein Go-Kart mit Straßenzulassung.", country: "Italien", price: "> 2 Mio €", production: "1.311 Stück", engine: "2.9L V8 Biturbo" }, en: { desc: "The last car under Enzo Ferrari's supervision. A go-kart for the road.", country: "Italy", price: "> 2 Mio €", production: "1,311 units", engine: "2.9L V8 Twin-Turbo" } }, specs: { hp: "478 PS", speed: "324 km/h", brand: "Ferrari", weight: "1.100 kg", accel: "4.1 s" }, imageUrl: "https://www.classicdriver.com/sites/default/files/article_images/1993-ferrari-f40-lm-by-michelotto_1363468_0.jpg" },
+            { id: "laferrari", model: "Ferrari LaFerrari", year: 2013, content: { de: { desc: "Der erste Hybrid von Ferrari. Teil der 'Holy Trinity' und technologische Spitze.", country: "Italien", price: "> 3 Mio €", production: "499 Stück", engine: "6.3L V12 Hybrid" }, en: { desc: "Ferrari's first hybrid. Part of the 'Holy Trinity' and technological apex.", country: "Italy", price: "> 3 Mio €", production: "499 units", engine: "6.3L V12 Hybrid" } }, specs: { hp: "963 PS", speed: "> 350 km/h", brand: "Ferrari", weight: "1.255 kg", accel: "2.6 s" }, imageUrl: "https://www.williamloughran.co.uk//media/7431/ferrari-laferrari-2311-1.jpg" },
+            { id: "mclaren-f1", model: "McLaren F1", year: 1993, content: { de: { desc: "Lange Zeit das schnellste Serienauto. Fahrersitz in der Mitte, vergoldeter Motorraum.", country: "UK", price: "> 15 Mio €", production: "106 Stück", engine: "6.1L V12 BMW" }, en: { desc: "Held the record for fastest production car for years. Central seat, gold-lined engine bay.", country: "UK", price: "> 15 Mio €", production: "106 units", engine: "6.1L V12 BMW" } }, specs: { hp: "627 PS", speed: "386 km/h", brand: "McLaren", weight: "1.138 kg", accel: "3.2 s" }, imageUrl: "https://upload.wikimedia.org/wikipedia/commons/1/16/1996_McLaren_F1_Chassis_No_63_6.1_Front.jpg" },
+            { id: "mclaren-p1", model: "McLaren P1", year: 2013, content: { de: { desc: "Entworfen, um das beste Fahrerauto der Welt auf Straße und Rennstrecke zu sein.", country: "UK", price: "ca. 1.5 Mio €", production: "375 Stück", engine: "3.8L V8 Hybrid" }, en: { desc: "Designed to be the best driver's car in the world on road and track.", country: "UK", price: "approx. 1.5 Mio €", production: "375 units", engine: "3.8L V8 Hybrid" } }, specs: { hp: "916 PS", speed: "350 km/h", brand: "McLaren", weight: "1.395 kg", accel: "2.8 s" }, imageUrl: "https://www.kamps-gruppe.de/wp-content/uploads/2021/08/mclaren-p1-header.jpg" },
+            { id: "supra", model: "Toyota Supra MK4", year: 1998, content: { de: { desc: "Eine Legende der Tuner-Szene, berühmt durch Filme und den 2JZ-Motor.", country: "Japan", price: "Steigend", production: "45.000 Stück", engine: "3.0L R6 Biturbo" }, en: { desc: "A legend of the tuner scene, famous for movies and the bulletproof 2JZ engine.", country: "Japan", price: "Rising", production: "45,000 units", engine: "3.0L I6 Twin-Turbo" } }, specs: { hp: "330 PS", speed: "250 km/h", brand: "Toyota", weight: "1.570 kg", accel: "5.1 s" }, imageUrl: "https://listing-images.autoscout24.ch/114/12890114/689813887.jpg?w=1920&q=90" },
+            { id: "2000gt", model: "Toyota 2000GT", year: 1967, content: { de: { desc: "Japans erster Supercar. Ein Design-Meisterwerk, entwickelt in Zusammenarbeit mit Yamaha.", country: "Japan", price: "> 1 Mio €", production: "351 Stück", engine: "2.0L R6" }, en: { desc: "Japan's first supercar. A design masterpiece developed in collaboration with Yamaha.", country: "Japan", price: "> 1 Mio €", production: "351 units", engine: "2.0L I6" } }, specs: { hp: "150 PS", speed: "220 km/h", brand: "Toyota", weight: "1.120 kg", accel: "8.4 s" }, imageUrl: "https://automedia.revsinstitute.org/wp-content/uploads/2022/05/wm-toyota-2000gt-1-1024x683.jpg" },
+            { id: "gt3rs", model: "Porsche 911 GT3 RS", year: 2023, content: { de: { desc: "Ein Rennwagen für die Straße. Kompromisslose Aerodynamik.", country: "Deutschland", price: "ab 248.000 €", production: "Limitiert", engine: "4.0L B6 Sauger" }, en: { desc: "A race car for the road. Uncompromising aerodynamics.", country: "Germany", price: "from 248,000 €", production: "Limited", engine: "4.0L F6 N/A" } }, specs: { hp: "525 PS", speed: "296 km/h", brand: "Porsche", weight: "1.450 kg", accel: "3.2 s" }, imageUrl: "https://a.storyblok.com/f/322327/1940x1320/2c42fb4bc5/cz23v20ox0009-911-gt3-rs-front.jpg/m/990x673/smart/filters:format(webp)" },
+            { id: "carreragt", model: "Porsche Carrera GT", year: 2004, content: { de: { desc: "Analoger Supersportwagen mit einem V10-Rennmotor, der schreit wie ein F1-Wagen.", country: "Deutschland", price: "> 1.5 Mio €", production: "1.270 Stück", engine: "5.7L V10 Sauger" }, en: { desc: "Analog supercar with a V10 race engine that screams like an F1 car.", country: "Germany", price: "> 1.5 Mio €", production: "1,270 units", engine: "5.7L V10 N/A" } }, specs: { hp: "612 PS", speed: "330 km/h", brand: "Porsche", weight: "1.380 kg", accel: "3.9 s" }, imageUrl: "https://upload.wikimedia.org/wikipedia/commons/6/65/Porsche_Carrera_GT_-_Goodwood_Breakfast_Club_%28July_2008%29.jpg" },
+            { id: "chiron", model: "Bugatti Chiron", year: 2016, content: { de: { desc: "Luxus und absolute Höchstleistung vereint. Der W16-Motor ist ein technisches Wunder.", country: "Frankreich", price: "3 Mio €", production: "500 Stück", engine: "8.0L W16 Quad-Turbo" }, en: { desc: "Luxury and absolute performance combined. The W16 engine is a technical marvel.", country: "France", price: "3 Mio €", production: "500 units", engine: "8.0L W16 Quad-Turbo" } }, specs: { hp: "1500 PS", speed: "420 km/h", brand: "Bugatti", weight: "1.995 kg", accel: "2.4 s" }, imageUrl: "https://upload.wikimedia.org/wikipedia/commons/6/62/Bugatti_Chiron_%2836559710091%29.jpg" },
+            { id: "veyron", model: "Bugatti Veyron 16.4", year: 2005, content: { de: { desc: "Das Auto, das die 400 km/h-Barriere durchbrach und die Automobilwelt nachhaltig veränderte.", country: "Frankreich", price: "1-2 Mio €", production: "450 Stück", engine: "8.0L W16 Quad-Turbo" }, en: { desc: "The car that broke the 400 km/h barrier and changed the automotive world forever.", country: "France", price: "1-2 Mio €", production: "450 units", engine: "8.0L W16 Quad-Turbo" } }, specs: { hp: "1001 PS", speed: "407 km/h", brand: "Bugatti", weight: "1.888 kg", accel: "2.5 s" }, imageUrl: "https://upload.wikimedia.org/wikipedia/commons/c/c9/Bugatti_Veyron_16.4_%E2%80%93_Frontansicht_%281%29%2C_5._April_2012%2C_D%C3%BCsseldorf.jpg" },
+            { id: "nevera", model: "Rimac Nevera", year: 2021, content: { de: { desc: "Das elektrische Hypercar, das Rekorde bricht. Beschleunigung, die die Physik herausfordert.", country: "Kroatien", price: "2 Mio €", production: "150 Stück", engine: "4 Elektromotoren" }, en: { desc: "The electric hypercar that breaks records. Acceleration that defies physics.", country: "Croatia", price: "2 Mio €", production: "150 units", engine: "4 Electric Motors" } }, specs: { hp: "1914 PS", speed: "412 km/h", brand: "Rimac", weight: "2.150 kg", accel: "1.81 s" }, imageUrl: "https://images.ctfassets.net/uaddx06iwzdz/1HWo7mRFQfNu2D17ZCyZh2/019f89ee872ac0c179e4d051a9dd92be/rimac-nevera-front.jpeg" },
+            { id: "conceptone", model: "Rimac Concept_One", year: 2013, content: { de: { desc: "Der Pionier. Der Beweis, dass Elektroautos nicht nur schnell, sondern auch emotional sein können.", country: "Kroatien", price: "1 Mio €", production: "8 Stück", engine: "4 Elektromotoren" }, en: { desc: "The pioneer. Proof that electric cars can be not just fast, but also emotional.", country: "Croatia", price: "1 Mio €", production: "8 units", engine: "4 Electric Motors" } }, specs: { hp: "1224 PS", speed: "355 km/h", brand: "Rimac", weight: "1.850 kg", accel: "2.5 s" }, imageUrl: "https://media.evo.co.uk/image/private/s--X-WVjvBW--/f_auto,t_content-image-full-desktop@1/v1556214084/evo/2016/09/001-rimac-conceptone.jpg" },
+            { id: "aventador", model: "Lamborghini Aventador", year: 2018, content: { de: { desc: "Kantig, laut, aggressiv. Der V12-Saugmotor ist einer der letzten seiner Art.", country: "Italien", price: "500.000 €", production: "11.465 Stück", engine: "6.5L V12" }, en: { desc: "Angular, loud, aggressive. The naturally aspirated V12 is one of the last of its kind.", country: "Italy", price: "500,000 €", production: "11,465 units", engine: "6.5L V12" } }, specs: { hp: "770 PS", speed: "350 km/h", brand: "Lamborghini", weight: "1.525 kg", accel: "2.8 s" }, imageUrl: "https://res.cloudinary.com/unix-center/image/upload/c_limit,dpr_3.0,f_auto,fl_progressive,g_center,h_580,q_75,w_906/kxxsmpxaopxf5gzec22w.jpg" },
+            { id: "countach", model: "Lamborghini Countach LP5000", year: 1985, content: { de: { desc: "Das Poster-Car einer ganzen Generation. Keilform in Perfektion und Scherentüren-Pionier.", country: "Italien", price: "> 500.000 €", production: "610 Stück", engine: "5.2L V12" }, en: { desc: "The poster car of a generation. Wedge shape in perfection and scissor door pioneer.", country: "Italy", price: "> 500,000 €", production: "610 units", engine: "5.2L V12" } }, specs: { hp: "455 PS", speed: "295 km/h", brand: "Lamborghini", weight: "1.490 kg", accel: "4.8 s" }, imageUrl: "https://upload.wikimedia.org/wikipedia/commons/7/7e/Lamborghini_Countach_-_Flickr_-_exfordy_%282%29.jpg" },
+            { id: "jesko", model: "Koenigsegg Jesko", year: 2020, content: { de: { desc: "Schwedische Ingenieurskunst am Limit. Gebaut, um 300 mph zu durchbrechen.", country: "Schweden", price: "2.8 Mio €", production: "125 Stück", engine: "5.0L V8 Biturbo" }, en: { desc: "Swedish engineering at the limit. Built to break the 300 mph barrier.", country: "Sweden", price: "2.8 Mio €", production: "125 units", engine: "5.0L V8 Twin-Turbo" } }, specs: { hp: "1600 PS", speed: "> 480 km/h", brand: "Koenigsegg", weight: "1.420 kg", accel: "2.5 s" }, imageUrl: "https://cms-assets.autoscout24.com/uaddx06iwzdz/4lB8O2MWK4MKPIDaGV9t0L/0b2558676af455a6e5b277f3cc21b68b/koenigsegg-jesko-l-01.jpg?w=1100" },
+            { id: "agerars", model: "Koenigsegg Agera RS", year: 2015, content: { de: { desc: "Der Rekordbrecher. Hielt lange den Titel für das schnellste Serienauto der Welt.", country: "Schweden", price: "> 5 Mio €", production: "25 Stück", engine: "5.0L V8 Biturbo" }, en: { desc: "The record breaker. Held the title for fastest production car for a long time.", country: "Sweden", price: "> 5 Mio €", production: "25 units", engine: "5.0L V8 Twin-Turbo" } }, specs: { hp: "1160 PS", speed: "447 km/h", brand: "Koenigsegg", weight: "1.395 kg", accel: "2.8 s" }, imageUrl: "https://koenigsegg-cdn-g7eehhd6f0ewcaff.z02.azurefd.net/drupal/styles/1920x1400/azure/2022-02/IMG_3982.jpg?h=6f6b169f&itok=TdJKiAYM" },
+            { id: "huayra", model: "Pagani Huayra", year: 2011, content: { de: { desc: "Ein Auto wie eine Skulptur. Jedes Detail ist Kunst.", country: "Italien", price: "Hoher Wert", production: "100 Stück (Coupé)", engine: "6.0L V12 AMG" }, en: { desc: "A car like a sculpture. Every detail is art.", country: "Italy", price: "High Value", production: "100 units (Coupe)", engine: "6.0L V12 AMG" } }, specs: { hp: "730 PS", speed: "360 km/h", brand: "Pagani", weight: "1.350 kg", accel: "3.0 s" }, imageUrl: "https://www.topgear.com/sites/default/files/cars-car/image/2016/08/rh_huayrabc-67.jpg" },
+            { id: "zonda", model: "Pagani Zonda Cinque", year: 2009, content: { de: { desc: "Einer der exklusivsten Paganis. Carbon-Titanium Karosserie und legendärer AMG V12 Sound.", country: "Italien", price: "> 10 Mio €", production: "5 Stück", engine: "7.3L V12 AMG" }, en: { desc: "One of the most exclusive Paganis. Carbon-titanium body and legendary AMG V12 sound.", country: "Italy", price: "> 10 Mio €", production: "5 units", engine: "7.3L V12 AMG" } }, specs: { hp: "678 PS", speed: "350 km/h", brand: "Pagani", weight: "1.210 kg", accel: "3.4 s" }, imageUrl: "https://i.auto-bild.de/ir_img/5/7/4/4/5/7/48b692126a5689e2.jpg?impolicy=leadteaser" },
+            { id: "tesla-s-plaid", model: "Tesla Model S Plaid", year: 2021, content: { de: { desc: "Die Definition moderner E-Performance. Familiensudan mit F1-Beschleunigung.", country: "USA", price: "ca. 110.000 €", production: "Serie", engine: "3 Elektromotoren" }, en: { desc: "The definition of modern EV performance. Family sedan with F1 acceleration.", country: "USA", price: "approx. 110,000 €", production: "Series", engine: "3 Electric Motors" } }, specs: { hp: "1020 PS", speed: "322 km/h", brand: "Tesla", weight: "2.162 kg", accel: "2.1 s" }, imageUrl: "https://ev-database.org/img/auto/Tesla_Model_S_2021/Tesla_Model_S_2021-01@2x.jpg" },
+            { id: "cybertruck", model: "Tesla Cybertruck", year: 2023, content: { de: { desc: "Radikales Design aus Edelstahl. Kugelsicher, elektrisch und polarisierend.", country: "USA", price: "ca. 100.000 €", production: "Serie", engine: "3 Elektromotoren" }, en: { desc: "Radical stainless steel design. Bulletproof, electric, and polarizing.", country: "USA", price: "approx. 100,000 €", production: "Series", engine: "3 Electric Motors" } }, specs: { hp: "845 PS", speed: "209 km/h", brand: "Tesla", weight: "3.100 kg", accel: "2.7 s" }, imageUrl: "https://cms-assets.autoscout24.com/uaddx06iwzdz/Ei2eY91qxqK8PsaWC1MjL/c60c355cb8209c4136d074b87b80c9f4/tesla-cybertruck-2019-51-1.jpg?w=1100" },
+            { id: "gtr", model: "Nissan GT-R Nismo", year: 2020, content: { de: { desc: "Godzilla. Technologisch hochentwickelter Allradantrieb macht ihn zum Kurvenmonster.", country: "Japan", price: "200.000 €", production: "Serie", engine: "3.8L V6 Biturbo" }, en: { desc: "Godzilla. Technologically advanced AWD makes it a cornering monster.", country: "Japan", price: "200,000 €", production: "Series", engine: "3.8L V6 Twin-Turbo" } }, specs: { hp: "600 PS", speed: "315 km/h", brand: "Nissan", weight: "1.725 kg", accel: "2.8 s" }, imageUrl: "https://i.auto-bild.de/ir_img/3/8/2/2/6/5/5/Nissan-GT-R-Nismo-3797-1010x568-e218964b823929bd.jpg?impolicy=og_images" },
+            { id: "skyliner34", model: "Nissan Skyline GT-R (R34)", year: 1999, content: { de: { desc: "Eine JDM-Ikone. Berühmt durch Filme und Spiele, technologisch seiner Zeit weit voraus.", country: "Japan", price: "Steigend (>100k)", production: "11.578 Stück", engine: "2.6L R6 Biturbo" }, en: { desc: "A JDM icon. Famous from movies and games, technologically far ahead of its time.", country: "Japan", price: "Rising (>100k)", production: "11,578 units", engine: "2.6L I6 Twin-Turbo" } }, specs: { hp: "280 PS", speed: "250 km/h", brand: "Nissan", weight: "1.540 kg", accel: "4.9 s" }, imageUrl: "https://static.jdmexport.com/wp-content/uploads/sites/9/2022/12/01074926/how-fast-is-a-nissan-gtr.jpg" },
+            { id: "valkyrie", model: "Aston Martin Valkyrie", year: 2021, content: { de: { desc: "Ein Formel-1-Wagen für die Straße. Entwickelt von Adrian Newey.", country: "UK", price: "3 Mio €", production: "150 Stück", engine: "6.5L V12 Hybrid" }, en: { desc: "A Formula 1 car for the road. Developed by Adrian Newey.", country: "UK", price: "3 Mio €", production: "150 units", engine: "6.5L V12 Hybrid" } }, specs: { hp: "1155 PS", speed: "400 km/h", brand: "Aston Martin", weight: "1.030 kg", accel: "2.5 s" }, imageUrl: "https://upload.wikimedia.org/wikipedia/commons/2/2c/Aston_Martin_Valkyrie_2023_9.jpg" },
+            { id: "db5", model: "Aston Martin DB5", year: 1963, content: { de: { desc: "Das Bond-Auto. Britische Eleganz und zeitlose Schönheit in Perfektion.", country: "UK", price: "> 800.000 €", production: "1.059 Stück", engine: "4.0L R6" }, en: { desc: "The Bond car. British elegance and timeless beauty in perfection.", country: "UK", price: "> 800,000 €", production: "1,059 units", engine: "4.0L I6" } }, specs: { hp: "282 PS", speed: "230 km/h", brand: "Aston Martin", weight: "1.502 kg", accel: "8.0 s" }, imageUrl: "https://images.bauerhosting.com/legacy/media/5fc4/e4bb/c26c/aa14/d7a1/9686/Aston%20web%201.jpg?ar=16%3A9&fit=crop&crop=top&auto=format&w=1440&q=80" },
+            { id: "m4", model: "BMW M4 Competition", year: 2022, content: { de: { desc: "Competition, Sport, Leichtbau. Eine radikale Fahrmaschine.", country: "Deutschland", price: "ca. 100.000 €", production: "Serie", engine: "3.0L R6 Biturbo" }, en: { desc: "Competition, Sport, Lightweight. A radical driving machine.", country: "Germany", price: "approx. 100,000 €", production: "Series", engine: "3.0L I6 Twin-Turbo" } }, specs: { hp: "510 PS", speed: "290 km/h", brand: "BMW", weight: "1.725 kg", accel: "3.5 s" }, imageUrl: "https://di-uploads-pod23.dealerinspire.com/bmwofowingsmills/uploads/2024/07/P90548593_highRes_the-all-new-bmw-m4-c-1.jpg" },
+            { id: "m1", model: "BMW M1", year: 1978, content: { de: { desc: "BMWs einziger echter Mittelmotor-Supersportwagen. Design von Giugiaro.", country: "Deutschland", price: "> 500.000 €", production: "453 Stück", engine: "3.5L R6" }, en: { desc: "BMW's only true mid-engine supercar. Design by Giugiaro.", country: "Germany", price: "> 500,000 €", production: "453 units", engine: "3.5L I6" } }, specs: { hp: "277 PS", speed: "260 km/h", brand: "BMW", weight: "1.300 kg", accel: "5.6 s" }, imageUrl: "https://cms-assets.autoscout24.com/uaddx06iwzdz/5MllaqTmFQRFmHTN07yxuP/d6b5436a9915eb2df92e7a6e2df0becd/BMW-M1-1979-1280-1e.jpg?w=1100" },
+            { id: "r8", model: "Audi R8 V10", year: 2022, content: { de: { desc: "Der letzte seiner Art. Audis Abschied vom V10-Saugmotor.", country: "Deutschland", price: "225.000 €", production: "Eingestellt", engine: "5.2L V10" }, en: { desc: "The last of its kind. Audi's farewell to the naturally aspirated V10.", country: "Germany", price: "225,000 €", production: "Discontinued", engine: "5.2L V10" } }, specs: { hp: "620 PS", speed: "331 km/h", brand: "Audi", weight: "1.570 kg", accel: "3.1 s" }, imageUrl: "https://images.pistonheads.com/nimg/46501-large.jpg" },
+            { id: "quattro", model: "Audi Sport Quattro", year: 1984, content: { de: { desc: "Das Monster der Gruppe B. Legendärer 5-Zylinder Sound und Allradantrieb.", country: "Deutschland", price: "> 400.000 €", production: "214 Stück", engine: "2.1L R5 Turbo" }, en: { desc: "The Group B monster. Legendary 5-cylinder sound and all-wheel drive.", country: "Germany", price: "> 400,000 €", production: "214 units", engine: "2.1L I5 Turbo" } }, specs: { hp: "306 PS", speed: "250 km/h", brand: "Audi", weight: "1.300 kg", accel: "4.9 s" }, imageUrl: "https://uploads.audi-mediacenter.com/system/production/media/37236/images/6a571413866910802e680590206be64445ace645/A168879_web_2880.jpg?1698245672" }
+        ];
+
+        const translations = {
+            en: { title: "Pure", subtitle: "Driving", collection: "The Collection", catalog: "Catalog", timeline: "Timeline", compare: "Comparison", brands: "Brands", home: "Home", catalogTitle: "The Catalog", catalogSub: "20 Icons of Automotive History", timelineTitle: "Timeline", timelineSub: "From 1886 to Today", compareTitle: "Head-to-Head", compareSub: "Choose two Legends", brandsTitle: "The Manufacturers", brandsSub: "Engineering Excellence", viewInCatalog: "View in Catalog", viewBrand: "Discover Brand", backToBrands: "Back to Brands", details: "Details", selectCar: "Select Car...", vehicleA: "Vehicle A", vehicleB: "Vehicle B", hq: "Headquarters", founded: "Founded", noImage: "Image unavailable", specs: { brand: "Brand", year: "Year", hp: "Power", engine: "Engine", accel: "0-60 mph", speed: "Top Speed", weight: "Weight", production: "Production", price: "Price", country: "Country" }, footer: "Automotive Collection 2024" },
+            de: { title: "Pure", subtitle: "Driving", collection: "Die Kollektion", catalog: "Katalog", timeline: "Zeitstrahl", compare: "Vergleich", brands: "Marken", home: "Startseite", catalogTitle: "Der Katalog", catalogSub: "20 Ikonen der Automobilgeschichte", timelineTitle: "Die Zeitleiste", timelineSub: "Von 1886 bis Heute", compareTitle: "Direkt-Vergleich", compareSub: "Wähle zwei Legenden", brandsTitle: "Die Hersteller", brandsSub: "Ingenieurskunst aus aller Welt", viewInCatalog: "Im Katalog ansehen", viewBrand: "Marke entdecken", backToBrands: "Zurück zu Marken", details: "Details", selectCar: "Fahrzeug wählen...", vehicleA: "Fahrzeug A", vehicleB: "Fahrzeug B", hq: "Hauptquartier", founded: "Gegründet", noImage: "Bild fehlt", specs: { brand: "Marke", year: "Baujahr", hp: "Leistung", engine: "Motor", accel: "0-100 km/h", speed: "V-Max", weight: "Gewicht", production: "Stückzahl", price: "Preis", country: "Land" }, footer: "Automotive Collection 2024" }
+        };
+
+        // --- GLOBAL STATE ---
+        const state = {
+            currentView: 'home',
+            selectedCar: null,
+            isMenuOpen: false,
+            lang: 'en',
+            selectedBrand: null,
+            compare: { left: 'benz-1', right: 'gt3rs' },
+            dropdowns: { left: false, right: false }
+        };
+
+        const app = document.getElementById('app');
+
+        // --- HELPER FUNCTIONS ---
+        function t(key, subKey) {
+            const val = subKey ? translations[state.lang][key][subKey] : translations[state.lang][key];
+            return val || key; // Fallback
+        }
+
+        function getCar(id) {
+            return carData.find(c => c.id === id);
+        }
+
+        // --- RENDER FUNCTIONS ---
+
+        function render() {
+            app.innerHTML = '';
+            
+            // 1. Navigation (Header & Overlay Menu)
+            app.innerHTML += renderHeader();
+            app.innerHTML += renderMenu();
+
+            // 2. Main Content
+            let contentHtml = '';
+            if (state.currentView === 'home') {
+                contentHtml += renderHero();
+                contentHtml += renderCatalog();
+            } else if (state.currentView === 'timeline') {
+                contentHtml += renderTimeline();
+            } else if (state.currentView === 'compare') {
+                contentHtml += renderCompare();
+            } else if (state.currentView === 'brands') {
+                contentHtml += renderBrands();
+            }
+
+            // Wrapper for dynamic content to handle scrolling anchors
+            app.innerHTML += `<div id="content-start" class="min-h-screen bg-white relative z-10">${contentHtml}</div>`;
+
+            // 3. Modal
+            if (state.selectedCar) {
+                app.innerHTML += renderModal();
+            }
+
+            // 4. Footer
+            app.innerHTML += renderFooter();
+
+            // 5. Post-Render Actions
+            attachEventListeners();
+            initScrollReveal();
+            lucide.createIcons();
+        }
+
+        // --- COMPONENT TEMPLATES ---
+
+        function renderHeader() {
+            return `
+                <nav class="fixed top-0 w-full z-50 bg-transparent flex items-center justify-between p-6 pointer-events-none">
+                    <div class="text-2xl font-black uppercase tracking-tighter mix-blend-difference text-white pointer-events-auto cursor-pointer transition-colors hover:text-gray-300" onclick="navigateTo('home')">
+                        ${t('title')}<span class="opacity-50">${t('subtitle')}</span>
+                    </div>
+                    <button onclick="toggleMenu()" class="bg-black text-white p-3 rounded-full shadow-lg pointer-events-auto hover:scale-110 transition-transform z-50 flex items-center gap-2">
+                        <span class="text-xs font-bold uppercase">${state.lang.toUpperCase()}</span>
+                        <i data-lucide="menu" class="w-6 h-6"></i>
+                    </button>
+                </nav>
+            `;
+        }
+
+        function renderMenu() {
+            const translateClass = state.isMenuOpen ? 'translate-x-0' : 'translate-x-full';
+            return `
+                <div class="fixed inset-0 bg-black z-[60] text-white flex flex-col justify-center items-center transition-transform duration-500 ease-in-out ${translateClass}">
+                    <button onclick="toggleMenu()" class="absolute top-6 right-6 p-3 hover:bg-white/20 rounded-full">
+                        <i data-lucide="x" class="w-8 h-8"></i>
+                    </button>
+                    <div class="absolute top-6 left-6 flex gap-2">
+                        <button onclick="setLang('en')" class="px-4 py-2 rounded-full font-bold border transition-colors ${state.lang === 'en' ? 'bg-white text-black border-white' : 'border-gray-600 text-gray-400'}">EN</button>
+                        <button onclick="setLang('de')" class="px-4 py-2 rounded-full font-bold border transition-colors ${state.lang === 'de' ? 'bg-white text-black border-white' : 'border-gray-600 text-gray-400'}">DE</button>
+                    </div>
+                    <div class="flex flex-col gap-8 text-center">
+                        ${renderMenuLink('home', t('home'))}
+                        <button onclick="scrollToCatalog()" class="text-3xl md:text-5xl font-black uppercase hover:text-gray-400 transition-colors tracking-tighter hover:scale-105 transform duration-300">${t('catalog')}</button>
+                        ${renderMenuLink('timeline', t('timeline'))}
+                        ${renderMenuLink('compare', t('compare'))}
+                        ${renderMenuLink('brands', t('brands'))}
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderMenuLink(view, label) {
+            return `<button onclick="navigateTo('${view}')" class="text-3xl md:text-5xl font-black uppercase hover:text-gray-400 transition-colors tracking-tighter hover:scale-105 transform duration-300">${label}</button>`;
+        }
+
+        function renderHero() {
+            return `
+                <header class="h-screen w-full relative overflow-hidden flex items-center justify-center">
+                    <div class="absolute inset-0 z-0">
+                        <img src="https://cdnb.artstation.com/p/assets/images/images/082/255/465/large/rention-2.jpg?1732511470" alt="Hero" class="w-full h-full object-cover object-center scale-105 animate-slow-pan">
+                        <div class="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/40"></div>
+                    </div>
+                    <div class="relative z-10 text-center px-6 text-white drop-shadow-2xl">
+                        <h1 class="text-7xl md:text-9xl font-black tracking-tighter uppercase mb-4 drop-shadow-[0_5px_5px_rgba(0,0,0,0.8)] animate-in slide-in-from-bottom-10 fade-in duration-1000">
+                            ${t('title')}<br/>${t('subtitle')}
+                        </h1>
+                        <p class="text-xl md:text-2xl font-light tracking-[0.5em] uppercase drop-shadow-lg animate-in slide-in-from-bottom-12 fade-in duration-1000 delay-200">
+                            ${t('collection')}
+                        </p>
+                    </div>
+                    <button onclick="scrollToCatalogLocal()" class="absolute bottom-12 left-1/2 transform -translate-x-1/2 animate-bounce z-20 text-white cursor-pointer hover:scale-110 transition-transform drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
+                        <i data-lucide="chevron-down" class="w-12 h-12" stroke-width="1"></i>
+                    </button>
+                </header>
+            `;
+        }
+
+        function renderCatalog() {
+            const carsHtml = carData.map((car, index) => renderCarCard(car, index)).join('');
+            return `
+                <main id="catalog-section" class="container mx-auto px-4 py-24">
+                    <div class="text-center mb-24">
+                        <h2 class="text-4xl font-bold uppercase tracking-widest border-b-2 border-black inline-block pb-4">${t('catalogTitle')}</h2>
+                        <p class="mt-4 text-gray-500">${t('catalogSub')}</p>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-1">
+                        ${carsHtml}
+                    </div>
+                </main>
+            `;
+        }
+
+        function renderCarCard(car, index) {
+            return `
+                <div class="scroll-reveal reveal-hidden group relative aspect-[4/3] cursor-pointer overflow-hidden border border-gray-200 hover:border-black hover:z-10 transition-all duration-300 hover:shadow-2xl"
+                     onclick="openModal('${car.id}')"
+                     style="transition-delay: ${index * 50}ms">
+                    <div class="relative w-full h-full">
+                        <img src="${car.imageUrl}" alt="${car.model}" class="w-full h-full object-cover transition-all duration-700 group-hover:scale-110" loading="lazy">
+                    </div>
+                    <div class="absolute inset-0 bg-black/80 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center p-4 backdrop-blur-sm">
+                        <div class="text-center transform translate-y-4 group-hover:translate-y-0 transition-transform duration-500 ease-out">
+                            <span class="block text-white text-xs tracking-[0.2em] uppercase mb-2 opacity-0 group-hover:opacity-100 transition-opacity duration-500 delay-100">${car.year}</span>
+                            <h3 class="text-white text-xl font-bold uppercase border-b border-white pb-2 inline-block mb-4">${car.model}</h3>
+                            <p class="text-gray-300 text-xs mt-2 uppercase tracking-widest flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-500 delay-200">
+                                ${t('details')} <i data-lucide="arrow-right" class="w-3 h-3"></i>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderTimeline() {
+            const sortedCars = [...carData].sort((a, b) => a.year - b.year);
+            const itemsHtml = sortedCars.map((car, index) => {
+                const isEven = index % 2 === 0;
+                const rowClass = isEven ? 'md:flex-row-reverse' : '';
+                const textClass = isEven ? 'md:pr-12 md:text-right' : 'md:pl-12 md:text-left';
+                const imgContainerClass = isEven ? 'md:pl-12' : 'md:pr-12';
+
+                return `
+                    <div class="scroll-reveal reveal-hidden flex flex-col md:flex-row items-center gap-12 relative mb-24 ${rowClass}">
+                        <!-- Dot & Year -->
+                        <div class="absolute left-6 md:left-1/2 w-4 h-4 bg-black border-2 border-white transform -translate-x-1/2 z-10"></div>
+                        <div class="absolute left-12 md:left-1/2 top-0 transform md:-translate-x-1/2 -translate-y-8 md:translate-y-0 text-xs font-bold bg-black text-white px-2 py-1 z-20">
+                            ${car.year}
+                        </div>
+
+                        <!-- Image -->
+                        <div class="w-full md:w-5/12 ${imgContainerClass}">
+                            <div class="group border border-black p-2 bg-white relative overflow-hidden cursor-pointer shadow-lg hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 hover:shadow-[0_20px_50px_rgba(0,0,0,0.3)]"
+                                 onclick="openModal('${car.id}')">
+                                <div class="aspect-video overflow-hidden transition-all duration-700">
+                                    <img src="${car.imageUrl}" alt="${car.model}" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110">
+                                </div>
+                                <div class="absolute inset-0 bg-black/80 opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex items-center justify-center">
+                                    <button class="bg-white text-black px-4 py-2 text-xs font-bold uppercase tracking-widest hover:scale-105 transition-transform">
+                                        ${t('viewInCatalog')}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Text -->
+                        <div class="w-full md:w-5/12 pl-12 md:pl-0 ${textClass}">
+                            <h3 class="text-2xl font-black uppercase mb-2">${car.model}</h3>
+                            <p class="text-gray-600 font-light leading-relaxed">${car.content[state.lang].desc}</p>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            return `
+                <div class="container mx-auto px-6 py-24">
+                    <div class="text-center mb-24">
+                        <h2 class="text-4xl font-bold uppercase tracking-widest border-b-2 border-black inline-block pb-4">${t('timelineTitle')}</h2>
+                        <p class="mt-4 text-gray-500">${t('timelineSub')}</p>
+                    </div>
+                    <div class="relative">
+                        <div class="absolute left-6 md:left-1/2 top-0 bottom-0 w-px bg-black md:-translate-x-1/2"></div>
+                        ${itemsHtml}
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderCompare() {
+            const leftCar = getCar(state.compare.left);
+            const rightCar = getCar(state.compare.right);
+
+            return `
+                <div class="container mx-auto px-6 py-24">
+                    <div class="text-center mb-16">
+                        <h2 class="text-4xl font-bold uppercase tracking-widest border-b-2 border-black inline-block pb-4">${t('compareTitle')}</h2>
+                        <p class="mt-4 text-gray-500">${t('compareSub')}</p>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 relative">
+                        <!-- VS Badge -->
+                        <div class="hidden md:flex absolute left-1/2 top-48 transform -translate-x-1/2 -translate-y-1/2 z-20 bg-black text-white font-black text-xl w-16 h-16 items-center justify-center rounded-full border-4 border-white shadow-xl">VS</div>
+
+                        <!-- Left Column -->
+                        <div class="flex flex-col gap-6">
+                            ${renderDropdown('left', t('vehicleA'))}
+                            ${renderCompareCard(leftCar)}
+                        </div>
+
+                        <!-- Right Column -->
+                        <div class="flex flex-col gap-6">
+                            ${renderDropdown('right', t('vehicleB'))}
+                            ${renderCompareCard(rightCar)}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderDropdown(side, label) {
+            const currentId = state.compare[side];
+            const currentCar = getCar(currentId);
+            const isOpen = state.dropdowns[side];
+            
+            let itemsHtml = '';
+            if (isOpen) {
+                itemsHtml = `
+                    <div class="absolute top-full left-0 w-full bg-white border-2 border-black border-t-0 z-50 max-h-80 overflow-y-auto shadow-2xl animate-in fade-in slide-in-from-top-4 duration-300">
+                        ${carData.map(car => `
+                            <div onclick="selectCompareCar('${side}', '${car.id}')" class="p-3 border-b border-gray-100 cursor-pointer flex items-center gap-3 hover:bg-black hover:text-white transition-colors ${currentId === car.id ? 'bg-gray-100' : ''}">
+                                <div class="w-12 h-8 flex-shrink-0 bg-gray-200 overflow-hidden"><img src="${car.imageUrl}" class="w-full h-full object-cover"></div>
+                                <div class="flex flex-col text-left"><span class="text-xs font-bold uppercase leading-none">${car.model}</span><span class="text-[10px] opacity-70">${car.year}</span></div>
+                                ${currentId === car.id ? '<i data-lucide="check" class="ml-auto w-4 h-4"></i>' : ''}
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            }
+
+            return `
+                <div class="relative w-full">
+                    <label class="block text-xs font-bold uppercase tracking-widest mb-2 text-gray-400">${label}</label>
+                    <button onclick="toggleDropdown('${side}')" class="w-full border-2 border-black p-3 bg-white flex items-center justify-between hover:bg-gray-50 transition-colors">
+                        <div class="flex items-center gap-3 overflow-hidden">
+                            ${currentCar ? `<img src="${currentCar.imageUrl}" class="w-12 h-8 object-cover rounded-sm bg-gray-200">` : ''}
+                            <span class="font-bold truncate">${currentCar ? currentCar.model : t('selectCar')}</span>
+                        </div>
+                        <i data-lucide="chevron-down" class="w-4 h-4 transform transition-transform flex-shrink-0 ${isOpen ? 'rotate-180' : ''}"></i>
+                    </button>
+                    ${itemsHtml}
+                </div>
+            `;
+        }
+
+        function renderCompareCard(car) {
+            return `
+                <div class="border-2 border-black p-4 bg-white relative group shadow-xl">
+                    <div class="aspect-[4/3] mb-6 border-b border-black pb-4 relative overflow-hidden">
+                        <img src="${car.imageUrl}" alt="${car.model}" class="w-full h-full object-cover transition-all duration-500">
+                        <div class="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center cursor-pointer" onclick="openModal('${car.id}')">
+                            <span class="bg-white text-black px-3 py-1 text-xs font-bold uppercase tracking-widest">${t('viewInCatalog')}</span>
+                        </div>
+                    </div>
+                    <h3 class="text-2xl font-black uppercase mb-1">${car.model}</h3>
+                    <span class="text-xs font-bold bg-black text-white px-2 py-1 mb-6 inline-block">${car.year}</span>
+                    <div class="space-y-4">
+                        ${renderSpecRow(t('specs', 'brand'), car.specs.brand, 'car')}
+                        ${renderSpecRow(t('specs', 'year'), car.year, 'calendar')}
+                        ${renderSpecRow(t('specs', 'hp'), car.specs.hp, 'activity')}
+                        ${renderSpecRow(t('specs', 'accel'), car.specs.accel, 'timer')}
+                        ${renderSpecRow(t('specs', 'speed'), car.specs.speed, 'gauge')}
+                        ${renderSpecRow(t('specs', 'engine'), car.content[state.lang].engine, 'database')}
+                        ${renderSpecRow(t('specs', 'weight'), car.specs.weight, 'scale')}
+                        ${renderSpecRow(t('specs', 'production'), car.content[state.lang].production, 'factory')}
+                        ${renderSpecRow(t('specs', 'country'), car.content[state.lang].country, 'globe')}
+                        ${renderSpecRow(t('specs', 'price'), car.content[state.lang].price, 'dollar-sign')}
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderSpecRow(label, value, icon) {
+            return `
+                <div class="flex justify-between border-b border-gray-100 pb-2 items-center">
+                    <div class="flex items-center gap-2 text-gray-400 text-xs uppercase font-bold">
+                        <i data-lucide="${icon}" class="w-3.5 h-3.5"></i> ${label}
+                    </div>
+                    <span class="font-medium text-sm text-right">${value}</span>
+                </div>
+            `;
+        }
+
+        function renderBrands() {
+            // Check if brand selected
+            if (state.selectedBrand) {
+                return renderBrandDetail(state.selectedBrand);
+            }
+
+            // Overview List
+            const uniqueBrands = [...new Set(carData.map(car => car.specs.brand))].sort();
+            
+            const brandsHtml = uniqueBrands.map((brand, index) => {
+                const info = brandData[brand];
+                const repCar = carData.find(c => c.specs.brand === brand);
+                return `
+                    <div class="scroll-reveal reveal-hidden group cursor-pointer flex flex-col items-center" style="transition-delay: ${index * 50}ms" onclick="selectBrand('${brand}')">
+                        <div class="w-full aspect-video overflow-hidden border border-gray-200 relative mb-6 shadow-lg group-hover:shadow-2xl transition-all duration-500">
+                            <img src="${info?.heroImage || repCar.imageUrl}" alt="${brand}" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110">
+                            <div class="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                                <span class="text-white text-sm font-bold uppercase tracking-widest border border-white px-4 py-2 hover:bg-white hover:text-black transition-colors">${t('viewBrand')}</span>
+                            </div>
+                        </div>
+                        <h3 class="text-3xl font-black uppercase group-hover:scale-110 transition-transform duration-300">${brand}</h3>
+                        <span class="text-xs text-gray-400 font-bold uppercase tracking-widest mt-2">${info?.hq || "Global"}</span>
+                    </div>
+                `;
+            }).join('');
+
+            return `
+                <div class="container mx-auto px-6 py-24">
+                    <div class="text-center mb-24">
+                        <h2 class="text-4xl font-bold uppercase tracking-widest border-b-2 border-black inline-block pb-4">${t('brandsTitle')}</h2>
+                        <p class="mt-4 text-gray-500">${t('brandsSub')}</p>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12">
+                        ${brandsHtml}
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderBrandDetail(brand) {
+            const brandInfo = brandData[brand];
+            const brandCars = carData.filter(car => car.specs.brand === brand);
+            const carsHtml = brandCars.map((car, index) => renderCarCard(car, index)).join('');
+
+            return `
+                <div class="animate-in fade-in duration-500">
+                    <div class="h-[60vh] md:h-[70vh] w-full relative overflow-hidden flex items-center justify-center bg-black">
+                        <div class="absolute inset-0 z-0">
+                            <img src="${brandInfo?.heroImage || "https://upload.wikimedia.org/wikipedia/commons/e/e4/Aston_Martin_Gaydon.jpg"}" class="w-full h-full object-cover object-center opacity-80 animate-slow-pan">
+                            <div class="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent"></div>
+                        </div>
+                        <div class="relative z-10 text-center px-6 text-white max-w-4xl">
+                            <button onclick="selectBrand(null)" class="absolute top-[-100px] left-0 text-xs font-bold uppercase tracking-widest hover:text-gray-300 transition-colors flex items-center gap-2 mb-8 md:relative md:top-auto md:mb-8 mx-auto">
+                                <i data-lucide="arrow-left" class="w-4 h-4"></i> ${t('backToBrands')}
+                            </button>
+                            <h1 class="text-6xl md:text-8xl font-black uppercase tracking-tighter mb-4 shadow-black drop-shadow-lg">${brand}</h1>
+                            <p class="text-xl font-light italic opacity-90 mb-8">"${brandInfo?.desc}"</p>
+                            <div class="flex flex-wrap justify-center gap-6 text-xs font-bold tracking-widest uppercase">
+                                <div class="flex items-center gap-2 bg-white/10 px-4 py-2 rounded-full backdrop-blur-md border border-white/20"><i data-lucide="map-pin" class="w-3.5 h-3.5"></i> ${brandInfo.hq}</div>
+                                <div class="flex items-center gap-2 bg-white/10 px-4 py-2 rounded-full backdrop-blur-md border border-white/20"><i data-lucide="building-2" class="w-3.5 h-3.5"></i> ${t('founded')}: ${brandInfo.founded}</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="container mx-auto px-4 py-24 bg-white">
+                        <div class="text-center mb-16"><h2 class="text-3xl font-bold uppercase tracking-widest border-b-2 border-black inline-block pb-4">${t('collection')}</h2></div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-1">
+                            ${carsHtml}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderModal() {
+            const car = getCar(state.selectedCar);
+            if (!car) return '';
+
+            return `
+                <div class="fixed inset-0 z-[70] flex items-center justify-center p-4 md:p-8 animate-in fade-in duration-500">
+                    <div class="absolute inset-0 bg-white/95 backdrop-blur-md transition-opacity duration-500" onclick="closeModal()"></div>
+                    <div class="bg-white w-full max-w-5xl h-[90vh] md:h-auto relative z-10 border-2 border-black shadow-2xl overflow-y-auto flex flex-col md:flex-row animate-in zoom-in-95 fade-in duration-500 ease-out">
+                        <button onclick="closeModal()" class="absolute top-4 right-4 z-20 bg-black text-white p-2 hover:bg-gray-800 transition-colors rounded-full">
+                            <i data-lucide="x" class="w-6 h-6"></i>
+                        </button>
+                        <div class="w-full md:w-1/2 h-64 md:h-auto relative border-b-2 md:border-b-0 md:border-r-2 border-black bg-gray-100 overflow-hidden group">
+                            <img src="${car.imageUrl}" class="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105">
+                        </div>
+                        <div class="w-full md:w-1/2 p-8 md:p-12 flex flex-col justify-center">
+                            <span class="text-6xl text-gray-100 font-black absolute top-4 right-12 select-none -z-10 opacity-20">${car.year}</span>
+                            <div class="mb-8">
+                                <span class="text-xs font-bold tracking-[0.2em] uppercase border border-black px-2 py-1 inline-block mb-4">${car.year}</span>
+                                <h2 class="text-4xl md:text-5xl font-black uppercase leading-none mb-6">${car.model}</h2>
+                                <p class="text-lg text-gray-600 leading-relaxed font-light">${car.content[state.lang].desc}</p>
+                            </div>
+                            <div class="grid grid-cols-2 gap-x-8 gap-y-4 border-t-2 border-black pt-8">
+                                ${renderSpecItem(t('specs', 'brand'), car.specs.brand, 'car')}
+                                ${renderSpecItem(t('specs', 'hp'), car.specs.hp, 'activity')}
+                                ${renderSpecItem(t('specs', 'engine'), car.content[state.lang].engine, 'database')}
+                                ${renderSpecItem(t('specs', 'accel'), car.specs.accel, 'timer')}
+                                ${renderSpecItem(t('specs', 'speed'), car.specs.speed, 'calendar')}
+                                ${renderSpecItem(t('specs', 'weight'), car.specs.weight, 'scale')}
+                                ${renderSpecItem(t('specs', 'production'), car.content[state.lang].production, 'factory')}
+                                ${renderSpecItem(t('specs', 'price'), car.content[state.lang].price, 'dollar-sign')}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderSpecItem(label, value, icon) {
+            return `
+                <div class="flex flex-col gap-1">
+                    <div class="flex items-center gap-2 text-gray-400 text-xs uppercase tracking-widest font-bold"><i data-lucide="${icon}" class="w-3.5 h-3.5"></i> ${label}</div>
+                    <span class="text-lg font-medium">${value}</span>
+                </div>
+            `;
+        }
+
+        function renderFooter() {
+            return `
+                <footer class="bg-black text-white py-12 text-center border-t border-gray-800 relative z-10">
+                    <p class="uppercase tracking-widest text-xs">${t('footer')}</p>
+                </footer>
+            `;
+        }
+
+        // --- ACTIONS ---
+
+        function navigateTo(view) {
+            state.currentView = view;
+            state.isMenuOpen = false;
+            state.selectedBrand = null; // Reset brand selection when navigating away
+            render();
+            if(view === 'home') window.scrollTo(0,0);
+            else document.getElementById('content-start')?.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function scrollToCatalog() {
+            if(state.currentView !== 'home') {
+                state.currentView = 'home';
+                state.isMenuOpen = false;
+                render();
+                // small delay to let DOM update
+                setTimeout(scrollToCatalogLocal, 100);
+            } else {
+                state.isMenuOpen = false;
+                render();
+                scrollToCatalogLocal();
+            }
+        }
+
+        function scrollToCatalogLocal() {
+            document.getElementById('catalog-section')?.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function toggleMenu() {
+            state.isMenuOpen = !state.isMenuOpen;
+            render();
+        }
+
+        function setLang(lang) {
+            state.lang = lang;
+            render();
+        }
+
+        function openModal(id) {
+            state.selectedCar = id;
+            render();
+        }
+
+        function closeModal() {
+            state.selectedCar = null;
+            render();
+        }
+
+        function toggleDropdown(side) {
+            state.dropdowns[side] = !state.dropdowns[side];
+            // Close other dropdown
+            if(side === 'left') state.dropdowns.right = false;
+            else state.dropdowns.left = false;
+            render();
+        }
+
+        function selectCompareCar(side, id) {
+            state.compare[side] = id;
+            state.dropdowns[side] = false;
+            render();
+        }
+
+        function selectBrand(brand) {
+            state.selectedBrand = brand;
+            render();
+        }
+
+        // --- EVENTS & ANIMATIONS ---
+
+        function attachEventListeners() {
+            // Close dropdowns when clicking outside
+            document.onclick = function(e) {
+                if (!e.target.closest('.relative.w-full')) {
+                    if (state.dropdowns.left || state.dropdowns.right) {
+                        state.dropdowns.left = false;
+                        state.dropdowns.right = false;
+                        render();
+                    }
+                }
+            }
+        }
+
+        function initScrollReveal() {
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.remove('reveal-hidden');
+                        entry.target.classList.add('reveal-visible');
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, { threshold: 0.1, rootMargin: '50px' });
+
+            document.querySelectorAll('.scroll-reveal').forEach(el => observer.observe(el));
+        }
+
+        // --- INIT ---
+        render();
+
+    </script>
+</body>
+</html>
